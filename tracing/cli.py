@@ -4,7 +4,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 
-from tracing.config import ARCHS, COMPRESSION_EXTENSIONS, DEFAULT_BBV_INTERVAL, DEFAULT_OUTPUT_DIR, MAX_TB_SIZE_MIB, NO_TRACE, PURECAP_ARCH, TRACE_EXTENSIONS, TRACE_FORMATS, BbvMethod, QtraceMode, disk_image_path
+from tracing.config import ARCHS, BBV_KEYS, COMPRESSION_EXTENSIONS, DEFAULT_BBV_INTERVAL, DEFAULT_OUTPUT_DIR, MAX_TB_SIZE_MIB, NO_TRACE, PURECAP_ARCH, TRACE_EXTENSIONS, TRACE_FORMATS, BbvMethod, QtraceMode, disk_image_path
 from tracing.qemu import BbvOptions, LaunchOptions, QemuRunner, SimpointOptions, read_simpoint_ids
 from tracing.workload import Workload, option_name
 
@@ -43,7 +43,8 @@ def add_common_args(parser):
     bbv_method.add_argument("--bbv-profiling", action="store_true", help="collect BBVs with QEMU's inline instruction counting")
     bbv_method.add_argument("--bbv", dest="bbv_plugin", action="store_true", help="DEPRECATED: collect BBVs with the libbbv.so plugin")
     bbv_group.add_argument("--bbv-interval", type=int, default=DEFAULT_BBV_INTERVAL, help=f"BBV interval in instructions (default: {DEFAULT_BBV_INTERVAL})")
-
+    bbv_group.add_argument("--bbv-key", choices=BBV_KEYS, help=f"how QEMU keys basic blocks in the BBV (bbvkey=, default: {DEFAULT_BBV_KEY})")
+    
     simpoint_group = parser.add_argument_group("SimPoint options")
     simpoint_group.add_argument("--simpoints-file", help="sorted SimPoints file")
     simpoint_group.add_argument("--simpoint-instructions", type=int, help="instructions per SimPoint interval")
@@ -68,6 +69,8 @@ def validate_common_args(args, report_error):
 
     if args.bbv_plugin:
         warn("--bbv (BBV plugin) is deprecated and slower than --bbv-profiling")
+    if args.bbv_key and not args.bbv_profiling:
+        report_error("--bbv-key requires --bbv-profiling")
     if bbv_requested:
         if args.simpoints_file:
             report_error("BBV profiling and --simpoints-file are mutually exclusive")
@@ -180,7 +183,7 @@ def build_launch_options(config):
     args = config.args
     bbv = simpoints = None
     if config.bbv_method:
-        bbv = BbvOptions(config.bbv_method, args.bbv_interval, config.workload.trace_name(args), config.start_address, config.end_address)
+        bbv = BbvOptions(config.bbv_method, args.bbv_interval, config.workload.trace_name(args), config.start_address, config.end_address, args.bbv_key or DEFAULT_BBV_KEY)
     if args.simpoints_file:
         simpoints = SimpointOptions(args.simpoints_file, args.simpoint_instructions, config.start_address, args.pc_simpoints, args.warmup_instructions)
     return LaunchOptions(
@@ -218,6 +221,8 @@ def collect_info_fields(config):
     if config.bbv_method:
         fields["BBV collection"] = config.bbv_method.value
         fields["BBV interval"] = args.bbv_interval
+        if config.bbv_method is BbvMethod.INLINE:
+            fields["BBV key"] = args.bbv_key or DEFAULT_BBV_KEY
     if args.simpoints_file:
         fields["SimPoints file"] = args.simpoints_file
         fields["SimPoints mode"] = "PC-based" if args.pc_simpoints else "interval-based"

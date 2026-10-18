@@ -26,6 +26,8 @@ COMPRESSION_EXTENSIONS = {
 }
 
 DEFAULT_BBV_INTERVAL = 100_000_000
+BBV_KEYS = ("start", "end", "startend", "all")
+DEFAULT_BBV_KEY = "end"
 MAX_TB_SIZE_MIB = 2048
 
 

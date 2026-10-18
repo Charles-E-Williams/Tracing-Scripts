@@ -114,6 +114,7 @@ class QemuRunner:
                 f"interval={bbv.interval}",
                 f"start_pc=0x{bbv.start_address:x}",
                 *process_filter_option,
+                f"bbvkey=end",
             ]))
 
         simpoints = options.simpoints
