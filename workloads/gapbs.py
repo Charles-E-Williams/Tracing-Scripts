@@ -1,10 +1,11 @@
-from tracing.workload import AddressError, Workload, redirect_output
+from tracing.config import PURECAP_ARCH, RISCV64_ARCH
+from tracing.workload import Workload, redirect_output
 
 GAPBS_DIR = "/gapbs"
 GRAPH_DIR = f"{GAPBS_DIR}/benchmark/graphs"
 GRAPHS = ("twitter", "web", "road", "kron", "urand")
 
-KERNELS = {
+KERNEL_GRAPH_SUFFIX_AND_OPTIONS = {
     "bfs": (".sg", "-n64"),
     "pr": (".sg", "-i1000 -t1e-4 -n16"),
     "cc": (".sg", "-n16"),
@@ -12,10 +13,11 @@ KERNELS = {
     "tc": ("U.sg", "-n3"),
     "sssp": (".wsg", "-n64"),
 }
-SSSP_DELTA = {"road": 50000}
+SSSP_DELTA_BY_GRAPH = {"road": 50000}
+DEFAULT_SSSP_DELTA = 2
 
-ADDRESSES = {
-    "riscv64": {
+START_END_ADDRESSES = {
+    RISCV64_ARCH: {
         "tc": (0x53848, None),
         "cc": (0x5435a, None),
         "bc": (0x54c24, None),
@@ -23,7 +25,7 @@ ADDRESSES = {
         "pr": (0x535d6, None),
         "bfs": (0x53ff6, None),
     },
-    "riscv64-purecap": {
+    PURECAP_ARCH: {
         "tc": (0x886ee, 0x11f7c0),
         "cc": (0x896c4, 0x121300),
         "bc": (0x8a062, 0x1215e0),
@@ -39,32 +41,31 @@ class Gapbs(Workload):
     help = "GAP Benchmark Suite"
 
     def add_args(self, parser):
-        g = parser.add_argument_group("GAPBS")
-        g.add_argument("--kernel", required=True, choices=sorted(KERNELS))
-        g.add_argument("--graph", required=True, choices=GRAPHS)
+        gapbs_group = parser.add_argument_group("GAPBS")
+        gapbs_group.add_argument("--kernel", required=True, choices=sorted(KERNEL_GRAPH_SUFFIX_AND_OPTIONS))
+        gapbs_group.add_argument("--graph", required=True, choices=GRAPHS)
 
-    def label(self, args):
+    def display_name(self, args):
+        return f"GAPBS kernel '{args.kernel}'"
+
+    def trace_name(self, args):
         return f"{args.kernel}_{args.graph}"
 
-    def descriptor(self, args):
+    def simpoint_trace_prefix(self, args):
         return f"{args.kernel}.{args.graph}"
 
-    def disk(self, args):
+    def disk_image_suffix(self, args):
         return args.graph
 
-    def addresses(self, args):
-        start, end = ADDRESSES[args.arch].get(args.kernel, (None, None))
-        if start is None or end is None:
-            raise AddressError(f"no start/end addresses recorded for kernel "
-                               f"'{args.kernel}' on {args.arch}")
-        return start, end
+    def start_end_addresses(self, args):
+        return START_END_ADDRESSES[args.arch].get(args.kernel, (None, None))
 
-    def commands(self, args):
-        ext, opts = KERNELS[args.kernel]
-        cmd = f"{GAPBS_DIR}/{args.kernel} -f {GRAPH_DIR}/{args.graph}{ext} {opts}"
+    def guest_commands(self, args):
+        graph_suffix, kernel_options = KERNEL_GRAPH_SUFFIX_AND_OPTIONS[args.kernel]
+        command = f"{GAPBS_DIR}/{args.kernel} -f {GRAPH_DIR}/{args.graph}{graph_suffix} {kernel_options}"
         if args.kernel == "sssp":
-            cmd += f" -d{SSSP_DELTA.get(args.graph, 2)}"
-        return [(None, redirect_output(cmd, self.label(args)))]
+            command += f" -d{SSSP_DELTA_BY_GRAPH.get(args.graph, DEFAULT_SSSP_DELTA)}"
+        return [(None, redirect_output(command, self.trace_name(args)))]
 
-    def info(self, args):
+    def info_fields(self, args):
         return {"Kernel": args.kernel, "Graph": args.graph}
