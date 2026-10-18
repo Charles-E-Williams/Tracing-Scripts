@@ -94,6 +94,7 @@ BBV profiling and SimPoint tracing need the benchmark's start and end addresses.
 | `--bbv-profiling` | Collects basic block vectors with QEMU's inline instruction counting into `<name>.bb.gz`. Use with `--trace-format none`. |
 | `--bbv` | Deprecated and slower: collects BBVs with the `libbbv.so` plugin. Cannot be combined with `--bbv-profiling`. |
 | `--bbv-interval N` | Instructions per BBV interval. Default 100000000. |
+| `--bbv-key {start,end,startend,all}` | The way QEMU keys basic blocks in the BBV (`bbvkey=`). Start PC, End PC, Start & End PC, or all at once. Only with `--bbv-profiling`. Default `end`. |
 
 ### SimPoint options
 

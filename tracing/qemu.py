@@ -21,6 +21,7 @@ class BbvOptions:
     output_name: str
     start_address: int
     end_address: int
+    key: str | None = None
 
 
 @dataclass(frozen=True)
@@ -114,7 +115,7 @@ class QemuRunner:
                 f"interval={bbv.interval}",
                 f"start_pc=0x{bbv.start_address:x}",
                 *process_filter_option,
-                f"bbvkey=end",
+                f"bbvkey={bbv.key}",
             ]))
 
         simpoints = options.simpoints
