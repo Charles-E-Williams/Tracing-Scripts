@@ -4,7 +4,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 
-from tracing.config import ARCHS, BBV_KEYS, COMPRESSION_EXTENSIONS, DEFAULT_BBV_INTERVAL, DEFAULT_OUTPUT_DIR, MAX_TB_SIZE_MIB, NO_TRACE, PURECAP_ARCH, TRACE_EXTENSIONS, TRACE_FORMATS, BbvMethod, QtraceMode, disk_image_path
+from tracing.config import ARCHS, BBV_KEYS, COMPRESSION_EXTENSIONS, DEFAULT_BBV_INTERVAL, DEFAULT_BBV_KEY, DEFAULT_OUTPUT_DIR, MAX_TB_SIZE_MIB, NO_TRACE, PURECAP_ARCH, TRACE_EXTENSIONS, TRACE_FORMATS, BbvMethod, QtraceMode, disk_image_path
 from tracing.qemu import BbvOptions, LaunchOptions, QemuRunner, SimpointOptions, read_simpoint_ids
 from tracing.workload import Workload, option_name
 
