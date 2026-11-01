@@ -11,8 +11,8 @@ START_END_ADDRESSES = {
     PURECAP_ARCH: (0x3e0b0, 0x595c0),
 }
 
-OPTIONAL_XSBENCH_FLAGS = {"particles": "-p", "hash_bins": "-h", "kernel_id": "-k"}
-POSITIVE_ARGS = ("lookups", "threads", "particles", "hash_bins")
+OPTIONAL_XSBENCH_FLAGS = {"gridpoints": "-g", "particles": "-p", "hash_bins": "-h", "kernel_id": "-k"}
+POSITIVE_ARGS = ("lookups", "threads", "gridpoints", "particles", "hash_bins")
 
 
 class XSBench(Workload):
@@ -26,6 +26,7 @@ class XSBench(Workload):
         xsbench_group.add_argument("--grid", required=True, choices=GRIDS, help="grid search type (-G)")
         xsbench_group.add_argument("--method", default="history", choices=METHODS, help="simulation method (-m, default: history)")
         xsbench_group.add_argument("--threads", type=int, default=1, help="OpenMP threads (-t, default: 1)")
+        xsbench_group.add_argument("--gridpoints", type=int, help="gridpoints per nuclide (-g, overrides the --size default)")
         xsbench_group.add_argument("--particles", type=int, help="particle histories (-p)")
         xsbench_group.add_argument("--hash-bins", type=int, help="hash bins (-h, --grid hash only)")
         xsbench_group.add_argument("--kernel-id", type=int, help="optimized kernel ID (-k)")
